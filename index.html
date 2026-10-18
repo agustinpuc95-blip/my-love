@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Te Amo En Todos Los Idiomas</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #000000;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* BARRA SUPERIOR DE TRADUCCIÓN */
+    #translation-bar {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 420px;
+      background: rgba(20, 5, 10, 0.85);
+      border: 1px solid rgba(255, 42, 75, 0.4);
+      border-radius: 16px;
+      padding: 8px 16px;
+      text-align: center;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(255, 42, 75, 0.25);
+      transition: all 0.3s ease;
+    }
+
+    #trans-word {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    }
+
+    #trans-meta {
+      font-size: 0.8rem;
+      color: #ff6b81;
+      margin-top: 2px;
+    }
+
+    /* PANTALLA O TARJETA INICIAL */
+    #intro-card {
+      position: fixed;
+      inset: 0;
+      background: #000000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 100;
+      text-align: center;
+      transition: opacity 0.8s ease, visibility 0.8s;
+    }
+
+    #intro-card.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .intro-msg {
+      font-size: 1.35rem;
+      line-height: 1.5;
+      font-weight: 600;
+      color: #ffffff;
+      max-width: 320px;
+      margin-bottom: 32px;
+      text-shadow: 0 0 12px rgba(255, 42, 75, 0.6);
+    }
+
+    .btn-discover {
+      background: linear-gradient(135deg, #ff2a4b, #b30024);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(255, 42, 75, 0.6);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-discover:active {
+      transform: scale(0.95);
+    }
+
+    /* CONTENEDOR PRINCIPAL DEL CORAZÓN */
+    #stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #heart-viewport {
+      position: relative;
+      width: min(88vw, 380px);
+      height: min(88vw, 380px);
+      animation: heartPulse 2.8s infinite ease-in-out;
+    }
+
+    @keyframes heartPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+
+    .lang-item {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      color: #ff2a4b;
+      font-weight: 600;
+      font-size: clamp(0.55rem, 1.8vmin, 0.78rem);
+      white-space: nowrap;
+      cursor: pointer;
+      text-shadow: 0 0 5px rgba(255, 42, 75, 0.7);
+      opacity: 0;
+      transition: opacity 0.4s ease, color 0.2s, transform 0.2s;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .lang-item.visible {
+      opacity: 1;
+    }
+
+    .lang-item.active {
+      color: #ffffff !important;
+      background: rgba(255, 42, 75, 0.3);
+      text-shadow: 0 0 12px #ffffff, 0 0 20px #ff2a4b;
+      z-index: 10;
+      transform: translate(-50%, -50%) scale(1.25) !important;
+    }
+
+    /* PESTAÑA LATERAL Y PANEL ¿ME PERDONAS? */
+    #tab-trigger {
+      position: fixed;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: linear-gradient(135deg, #ff2a4b, #99001a);
+      color: #fff;
+      padding: 12px 10px;
+      border-radius: 12px 0 0 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      z-index: 80;
+      box-shadow: -3px 0 15px rgba(255, 42, 75, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-right: none;
+      letter-spacing: 1px;
+    }
+
+    #forgive-drawer {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 100%;
+      max-width: 340px;
+      height: 100%;
+      background: rgba(12, 12, 16, 0.96);
+      backdrop-filter: blur(12px);
+      border-left: 1px solid rgba(255, 42, 75, 0.3);
+      z-index: 90;
+      transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 30px 24px;
+      text-align: center;
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.8);
+    }
+
+    #forgive-drawer.open {
+      right: 0;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .forgive-title {
+      font-size: 1.15rem;
+      line-height: 1.5;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 28px;
+      text-shadow: 0 0 10px rgba(255, 42, 75, 0.4);
+    }
+
+    .forgive-buttons {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .btn-yes {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
+      transition: all 0.3s ease;
+    }
+
+    .btn-no {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA SUPERIOR DE TRADUCCIÓN -->
+  <div id="translation-bar">
+    <div id="trans-word">Toca una frase</div>
+    <div id="trans-meta">Selecciona cualquier "Te amo" del corazón</div>
+  </div>
+
+  <!-- TARJETA INICIAL -->
+  <div id="intro-card">
+    <div class="intro-msg">
+      Te amo tanto que no solo te lo puedo decir en español ❤️
+    </div>
+    <button class="btn-discover" onclick="revealHeart()">Descubrir Corazón</button>
+  </div>
+
+  <!-- CONTENEDOR DEL CORAZÓN -->
+  <div id="stage">
+    <div id="heart-viewport"></div>
+  </div>
+
+  <!-- PESTAÑA LATERAL Y PANEL ¿ME PERDONAS? -->
+  <div id="tab-trigger" onclick="toggleDrawer(true)">
+    ¿Me perdonas? 💌
+  </div>
+
+  <div id="forgive-drawer">
+    <button class="close-btn" onclick="toggleDrawer(false)">&times;</button>
+    <div id="forgive-content">
+      <div class="forgive-title" id="forgive-text">
+        Lo que hice estuvo mal y lo sé, ya no lo vuelvo a hacer ¿ok? ¿me perdonas?
+      </div>
+      <div class="forgive-buttons" id="forgive-actions">
+        <button class="btn-yes" id="btn-yes" onclick="handleForgive('yes')">Sí</button>
+        <button class="btn-no" id="btn-no" onclick="handleForgive('no')">No</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Lista de traducciones de "Te amo"
+    const DATA = [
+      { text: "Te amo", lang: "Español", mean: "Te amo" },
+      { text: "I love you", lang: "Inglés", mean: "Te amo" },
+      { text: "Je t'aime", lang: "Francés", mean: "Te amo" },
+      { text: "Ich liebe dich", lang: "Alemán", mean: "Te amo" },
+      { text: "Ti amo", lang: "Italiano", mean: "Te amo" },
+      { text: "Eu te amo", lang: "Portugués", mean: "Te amo" },
+      { text: "Seni seviyorum", lang: "Turco", mean: "Te amo" },
+      { text: "Kocham Cię", lang: "Polaco", mean: "Te amo" },
+      { text: "Jag älskar dig", lang: "Sueco", mean: "Te amo" },
+      { text: "Я тебя люблю", lang: "Ruso", mean: "Te amo" },
+      { text: "사랑해", lang: "Coreano (Saranghae)", mean: "Te amo" },
+      { text: "愛してる", lang: "Japonés (Aishiteru)", mean: "Te amo" },
+      { text: "我爱你", lang: "Chino (Wǒ ài nǐ)", mean: "Te amo" },
+      { text: "Aku cinta kamu", lang: "Indonesio", mean: "Te amo" },
+      { text: "Anh yêu em", lang: "Vietnamita", mean: "Te amo" },
+      { text: "Ik hou van je", lang: "Holandés", mean: "Te amo" },
+      { text: "S'agapo", lang: "Griego", mean: "Te amo" },
+      { text: "Szeretlek", lang: "Húngaro", mean: "Te amo" },
+      { text: "Miluji tě", lang: "Checo", mean: "Te amo" },
+      { text: "Te iubesc", lang: "Rumano", mean: "Te amo" },
+      { text: "Mahal kita", lang: "Tagalo", mean: "Te amo" },
+      { text: "ฉันรักคุณ", lang: "Tailandés", mean: "Te amo" },
+      { text: "Tôi yêu bạn", lang: "Vietnamita", mean: "Te amo" },
+      { text: "Nimuhearru", lang: "Náhuatl", mean: "Te amo" },
+      { text: "Inakankua", lang: "Maya", mean: "Te amo" },
+      { text: "Candaayen", lang: "Quechua", mean: "Te amo" },
+      { text: "Aloha au iā 'oe", lang: "Hawaiano", mean: "Te amo" },
+      { text: "Nakupenda", lang: "Suajili", mean: "Te amo" },
+      { text: "Ngemandla", lang: "Zulú", mean: "Te amo" },
+      { text: "S'agapo", lang: "Griego", mean: "Te amo" },
+      { text: "Mena Tanda", lang: "Zapoteco", mean: "Te amo" },
+      { text: "T'estimo", lang: "Catalán", mean: "Te amo" },
+      { text: "Maite zaitut", lang: "Vasco", mean: "Te amo" },
+      { text: "Eg elska þig", lang: "Islandés", mean: "Te amo" },
+      { text: "Volim te", lang: "Croata", mean: "Te amo" },
+      { text: "Obicham te", lang: "Búlgaro", mean: "Te amo" },
+      { text: "Я тебе кохаю", lang: "Ucraniano", mean: "Te amo" },
+      { text: "أتمنى لك", lang: "Árabe", mean: "Te amo" },
+      { text: "אני אוהב אותך", lang: "Hebreo", mean: "Te amo" },
+      { text: "دوستت دارم", lang: "Persa", mean: "Te amo" },
+      { text: "मैं आपसे प्यार करता हूँ", lang: "Hindi", mean: "Te amo" },
+      { text: "আমি তোমাকে ভালোবাসি", lang: "Bengalí", mean: "Te amo" },
+      { text: "मैं तुमसे प्यार करता हूँ", lang: "Punyabí", mean: "Te amo" },
+      { text: "நான் உன்னை காதலிக்கிறேன்", lang: "Tamil", mean: "Te amo" },
+      { text: "Te dua", lang: "Albanés", mean: "Te amo" },
+      { text: "Rakastan sinua", lang: "Finlandés", mean: "Te amo" },
+      { text: "Jeg elsker deg", lang: "Noruego", mean: "Te amo" },
+      { text: "Jeg elsker dig", lang: "Danés", mean: "Te amo" },
+      { text: "Tá grá agam duit", lang: "Irlandés", mean: "Te amo" },
+      { text: "Rwy'n dy garu di", lang: "Galés", mean: "Te amo" },
+      { text: "Inooom", lang: "Otomí", mean: "Te amo" },
+      { text: "U'tsajik", lang: "Totonaco", mean: "Te amo" },
+      { text: "Aroha atawhai", lang: "Maorí", mean: "Te amo" },
+      { text: "Ou te alofa ia te oe", lang: "Samoano", mean: "Te amo" },
+      { text: "Ofa atu", lang: "Tonganés", mean: "Te amo" },
+      { text: "Te dua molt", lang: "Gallego", mean: "Te amo" },
+      { text: "Ti dua", lang: "Macedonio", mean: "Te amo" },
+      { text: "M'aube", lang: "Mixteco", mean: "Te amo" },
+      { text: "Tsi ge yu i", lang: "Cheroqui", mean: "Te amo" },
+      { text: "Te amo", lang: "Español", mean: "Te amo" }
+    ];
+
+    const viewport = document.getElementById("heart-viewport");
+    let activeItem = null;
+
+    // Ecuación paramétrica de corazón
+    function getHeartPos(t, scale) {
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+      return { x: x * scale, y: y * scale };
+    }
+
+    // Dibujar el corazón sin encimarse
+    function renderHeart() {
+      viewport.innerHTML = "";
+      const total = DATA.length;
+      
+      const layers = [
+        { count: 26, scale: 9.5 },
+        { count: 18, scale: 6.8 },
+        { count: 12, scale: 4.2 },
+        { count: 4,  scale: 1.8 }
+      ];
+
+      let dataIdx = 0;
+
+      layers.forEach((layer) => {
+        for (let i = 0; i < layer.count; i++) {
+          if (dataIdx >= total) break;
+          const itemData = DATA[dataIdx];
+          
+          const t = (i / layer.count) * (2 * Math.PI);
+          const pos = getHeartPos(t, layer.scale);
+
+          const el = document.createElement("div");
+          el.className = "lang-item";
+          el.innerText = itemData.text;
+
+          el.style.left = `calc(50% + ${pos.x}px)`;
+          el.style.top  = `calc(50% + ${pos.y}px)`;
+
+          el.addEventListener("click", (e) => {
+            e.stopPropagation();
+            highlightItem(el, itemData);
+          });
+
+          viewport.appendChild(el);
+          dataIdx++;
+        }
+      });
+    }
+
+    function highlightItem(el, itemData) {
+      if (activeItem) activeItem.classList.remove("active");
+      activeItem = el;
+      activeItem.classList.add("active");
+
+      document.getElementById("trans-word").innerText = itemData.text;
+      document.getElementById("trans-meta").innerText = `${itemData.lang} • "${itemData.mean}"`;
+    }
+
+    function revealHeart() {
+      document.getElementById("intro-card").classList.add("hidden");
+      const items = document.querySelectorAll(".lang-item");
+      items.forEach((item, idx) => {
+        setTimeout(() => {
+          item.classList.add("visible");
+        }, idx * 25);
+      });
+    }
+
+    // Lógica del panel "¿Me perdonas?"
+    function toggleDrawer(open) {
+      const drawer = document.getElementById("forgive-drawer");
+      if (open) {
+        drawer.classList.add("open");
+      } else {
+        drawer.classList.remove("open");
+      }
+    }
+
+    let noClickCount = 0;
+    function handleForgive(choice) {
+      const textEl = document.getElementById("forgive-text");
+      const actionsEl = document.getElementById("forgive-actions");
+
+      if (choice === 'yes') {
+        textEl.innerHTML = "¡Gracias! Te amo, no lo volveré a hacer, te amo ❤️";
+        actionsEl.innerHTML = `<button class="btn-yes" onclick="toggleDrawer(false)">Regresar ❤️</button>`;
+      } else if (choice === 'no') {
+        noClickCount++;
+        textEl.innerHTML = "¡Ándale, ya no lo vuelvo a hacer! 🥺";
+        const btnYes = document.getElementById("btn-yes");
+        if (btnYes) {
+          const currentSize = 1 + (noClickCount * 0.25);
+          btnYes.style.transform = `scale(${currentSize})`;
+        }
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      renderHeart();
+    });
+  </script>
+</body>
+</html>
